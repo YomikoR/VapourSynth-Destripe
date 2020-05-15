@@ -3,7 +3,9 @@ from functools import partial
 core = vs.core
 
 def Destripe(clip, width=1280, height=360, kernel='bicubic', b=0, c=1/2, taps=3, src_top=[0.0, 0.0], src_left=[0.0, 0.0], showdiff=False):
-    y32 = clip if clip.format.id == vs.GRAYS else _GetY32(clip)
+    y = core.std.ShufflePlanes(clip, 0, vs.GRAY)
+    isfloat = (y.format.id == vs.GRAYS)
+    y32 = y if isfloat else core.resize.Point(y, format=vs.GRAYS)
     kernel = kernel.lower()
     if not isinstance(src_top, list):
         try:
@@ -23,14 +25,23 @@ def Destripe(clip, width=1280, height=360, kernel='bicubic', b=0, c=1/2, taps=3,
     if showdiff:
         downt, difft = _Descale(ftop, width, height, kernel, b, c, taps, src_top[0], src_left[0], True)
         downb, diffb = _Descale(fbot, width, height, kernel, b, c, taps, src_top[1], src_left[1], True)
-        return _Weave(downt, downb), _Weave(difft, diffb)
+        down = _Weave(downt, downb)
+        diff = _Weave(difft, diffb)
+        if isfloat:
+            return down, diff
+        else:
+            downi = core.resize.Point(down, format=y.format, dither_type='error_diffusion')
+            diffi = core.resize.Point(diff, format=y.format, range_in_s='limited', range_s='full')
+            return downi, diffi
     else:
         downt = _Descale(ftop, width, height, kernel, b, c, taps, src_top[0], src_left[0], False)
         downb = _Descale(fbot, width, height, kernel, b, c, taps, src_top[1], src_left[1], False)
-        return _Weave(downt, downb)
-
-def _GetY32(clip):
-    return clip.std.ShufflePlanes(0, vs.GRAY).resize.Point(format=vs.GRAYS)
+        down = _Weave(downt, downb)
+        if isfloat:
+            return down
+        else:
+            downi = core.resize.Point(down, format=y.format, dither_type='error_diffusion')
+            return downi
 
 def _Weave(clipa, clipb):
     clip = core.std.Interleave([clipa, clipb])

@@ -9,27 +9,27 @@ A `descale` wrapper for anime destriping.
 
 ## How it works
 
-Some striped (aka cross-conversion, or 缟缟) anime artifacts are caused by improper upscaling by field. Using `Destripe` you manually try descaling by field. That's it.
+Some striped (aka cross-conversion, or 縞縞) anime artifacts are caused by improper upscaling by field. `Destripe` manually descales by field.
 
 ## Usage
 
-Only `GRAYS` input is internally supported. If it's not the case, the first plane will be converted to `GRAYS` and be processed.
+The first plane will be internally converted to `GRAYS` and be processed. The output has the same format as the first plane of the input.
 ```python
 from destripe import Destripe
 
-down = Destripe(clip clip[, int width=1280, int height=360, str kernel='bicubic', float b=0, float c=1/2, int taps=3, float[] src_top=[0.0, 0.0], float[] src_left=[0.0, 0.0], bool showdiff=False])
+down = Destripe(clip clip[, int width=1280, int height=360, str kernel='bicubic', float b=0, float c=1/2, int taps=3, float[] src_top=[0, 0], float[] src_left=[0, 0], bool showdiff=False])
 
 down, diff = Destripe(clip, ..., showdiff=True)
 ```
 Parameters:
 - `width`, `height`</br>
-The destination descale size for each field. For example, if you think the native resolution is 1280x720, then each field should be 1280x360.
+The destination descale size for each field. For example, if you believe the native resolution was 1280x720, then each field should be 1280x360.
 - `kernel`, `b`, `c`, `taps`</br>
 Parameters of the resizers. See [descale's page](https://github.com/Irrational-Encoding-Wizardry/vapoursynth-descale#usage).
 - `src_top`, `src_left`</br>
 Specify the cropping for the top field and the bottom field, respectively. Usually you need to modify `src_top` until satisfactory.
 - `showdiff`</br>
-Set to `True` to include the de-rescale error `diff` in the return tuple. `diff` has `GRAYS` format with the size of `clip`.
+Set to `True` to include the de-rescale absolute error `diff` in the return tuple. `diff` has the same format as the first plane of `clip`.
 
 Notes:
 - Bad borders could be amplified while descaling. You may give [EdgeFixer](https://github.com/sekrit-twc/EdgeFixer) a try before processing.
