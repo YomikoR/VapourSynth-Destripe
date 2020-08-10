@@ -27,11 +27,12 @@ The destination descale size for each field. For example, if you believe the nat
 - `kernel`, `b`, `c`, `taps`</br>
 Parameters of the resizers. See [descale's page](https://github.com/Irrational-Encoding-Wizardry/vapoursynth-descale#usage).
 - `src_top`, `src_left`</br>
-Specify the cropping for the top field and the bottom field, respectively. Usually you need to modify `src_top` until satisfactory.
+Specify the cropping for the top field and the bottom field, respectively. They refer to the initial upscale, see [this link](https://github.com/Irrational-Encoding-Wizardry/vapoursynth-descale/issues/2#issuecomment-305876093). Usually you need to modify `src_top` until satisfactory.
 - `showdiff`</br>
-Set to `True` to include the de-rescale absolute error `diff` in the return tuple. `diff` has the same format as the first plane of `clip`.
+Set to `True` to include the de-rescale absolute error `diff` in the return list. `diff` has the same format as the first plane of `clip`.
 
 Notes:
+- IVTC first if required, since Destripe doesn't deal with field order.
 - Bad borders could be amplified while descaling. You may give [EdgeFixer](https://github.com/sekrit-twc/EdgeFixer) a try before processing.
 - These settings could cause a position shift of the output from the source and you are supposed to fix by yourself.
 
