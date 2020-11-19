@@ -42,14 +42,14 @@ def Destripe(clip: vs.VideoNode,
     sb = sep[1::2]
     if fix_top[0] > 0 or fix_bottom[0] > 0:
         st16 = core.resize.Point(st, format=vs.GRAY16, dither_type='error_diffusion')
-        st32 = core.edgefixer.Continuity(st16, top=fix_top, bottom=fix_bottom).resize.Point(format=vs.GRAYS)
+        st32 = core.edgefixer.Continuity(st16, top=fix_top[0], bottom=fix_bottom[0]).resize.Point(format=vs.GRAYS)
     elif isfloat:
         st32 = st
     else:
         st32 = core.resize.Point(st, format=vs.GRAYS)
     if fix_top[1] > 0 or fix_bottom[1] > 0:
         sb16 = core.resize.Point(sb, format=vs.GRAY16, dither_type='error_diffusion')
-        sb32 = core.edgefixer.Continuity(sb16, top=fix_top, bottom=fix_bottom).resize.Point(format=vs.GRAYS)
+        sb32 = core.edgefixer.Continuity(sb16, top=fix_top[1], bottom=fix_bottom[1]).resize.Point(format=vs.GRAYS)
     elif isfloat:
         sb32 = sb
     else:
