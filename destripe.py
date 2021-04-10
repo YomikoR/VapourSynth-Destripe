@@ -1,6 +1,6 @@
 import vapoursynth as vs
 from functools import partial
-from typing import Callable, List, Union
+from typing import Any, Callable, List, Union
 core = vs.core
 
 def Destripe(clip: vs.VideoNode,
@@ -26,12 +26,17 @@ def Destripe(clip: vs.VideoNode,
         src_left = [src_left, src_left]
     if not isinstance(src_top, list):
         src_top = [src_top, src_top]
+    cropping_args_top = dict(src_top=src_top[0], src_left=src_left[0])
+    cropping_args_bot = dict(src_top=src_top[1], src_left=src_left[1])
     if not isinstance(src_width, list):
         src_width = [src_width, src_width]
-    src_width = [width if v <= 0 else v for v in src_width]
     if not isinstance(src_height, list):
         src_height = [src_height, src_height]
-    src_height = [height if v <= 0 else v for v in src_height]
+    if src_width[0] > 0.0 or src_width[1] > 0.0 or src_height[0] > 0.0 or src_height[1] > 0.0:
+        cropping_args_top['src_width'] = width if src_width[0] <= 0.0 else src_width[0]
+        cropping_args_bot['src_width'] = width if src_width[1] <= 0.0 else src_width[1]
+        cropping_args_top['src_height'] = height if src_height[0] <= 0.0 else src_height[0]
+        cropping_args_bot['src_height'] = height if src_height[1] <= 0.0 else src_height[1]
     if not isinstance(fix_top, list):
         fix_top = [fix_top, fix_top]
     if not isinstance(fix_bottom, list):
@@ -57,8 +62,8 @@ def Destripe(clip: vs.VideoNode,
         sb32 = core.resize.Point(sb, format=vs.GRAYS)
 
     if showdiff:
-        downt, difft = _Descale(st32, width, height, kernel, b, c, taps, src_left[0], src_top[0], src_width[0], src_height[0], True)
-        downb, diffb = _Descale(sb32, width, height, kernel, b, c, taps, src_left[1], src_top[1], src_width[1], src_height[1], True)
+        downt, difft = _Descale(st32, width, height, kernel, b, c, taps, True, **cropping_args_top)
+        downb, diffb = _Descale(sb32, width, height, kernel, b, c, taps, True, **cropping_args_bot)
         down = _Weave(downt, downb)
         diff = _Weave(difft, diffb)
         if isfloat:
@@ -68,8 +73,8 @@ def Destripe(clip: vs.VideoNode,
             diffi = core.resize.Point(diff, format=y.format, range_in_s='limited', range_s='full')
             return [downi, diffi]
     else:
-        downt = _Descale(st32, width, height, kernel, b, c, taps, src_left[0], src_top[0], src_width[0], src_height[0], False)
-        downb = _Descale(sb32, width, height, kernel, b, c, taps, src_left[1], src_top[1], src_width[1], src_height[1], False)
+        downt = _Descale(st32, width, height, kernel, b, c, taps, False, **cropping_args_top)
+        downb = _Descale(sb32, width, height, kernel, b, c, taps, False, **cropping_args_bot)
         down = _Weave(downt, downb)
         if isfloat:
             return down
@@ -85,46 +90,38 @@ def _Weave(clipa: vs.VideoNode, clipb: vs.VideoNode) -> vs.VideoNode:
 def _GetDescaler(kernel: str,
                  b: float,
                  c: float,
-                 taps: int,
-                 src_left: float,
-                 src_top: float,
-                 src_width: float,
-                 src_height: float) -> Callable[[vs.VideoNode, int, int], vs.VideoNode]:
+                 taps: int) -> Callable[[vs.VideoNode, int, int, ...], vs.VideoNode]:
     if kernel == 'bilinear':
-        return partial(core.descale.Debilinear, src_left=src_left, src_top=src_top, src_width=src_width, src_height=src_height)
+        return core.descale.Debilinear
     elif kernel == 'bicubic':
-        return partial(core.descale.Debicubic, b=b, c=c, src_left=src_left, src_top=src_top, src_width=src_width, src_height=src_height)
+        return partial(core.descale.Debicubic, b=b, c=c)
     elif kernel == 'lanczos':
-        return partial(core.descale.Delanczos, taps=taps, src_left=src_left, src_top=src_top, src_width=src_width, src_height=src_height)
+        return partial(core.descale.Delanczos, taps=taps)
     elif kernel == 'spline16':
-        return partial(core.descale.Despline16, src_left=src_left, src_top=src_top, src_width=src_width, src_height=src_height)
+        return core.descale.Despline16
     elif kernel == 'spline36':
-        return partial(core.descale.Despline36, src_left=src_left, src_top=src_top, src_width=src_width, src_height=src_height)
+        return core.descale.Despline36
     elif kernel == 'spline64':
-        return partial(core.descale.Despline64, src_left=src_left, src_top=src_top, src_width=src_width, src_height=src_height)
+        return core.descale.Despline64
     else:
         raise ValueError('descale: Invalid kernel specified.')
 
 def _GetResizer(kernel: str,
                 b: float,
                 c: float,
-                taps: int,
-                src_left: float,
-                src_top: float,
-                src_width: float,
-                src_height: float) -> Callable[[vs.VideoNode, int, int], vs.VideoNode]:
+                taps: int) -> Callable[[vs.VideoNode, int, int, ...], vs.VideoNode]:
     if kernel == 'bilinear':
-        return partial(core.resize.Bilinear, src_left=src_left, src_top=src_top, src_width=src_width, src_height=src_height)
+        return core.resize.Bilinear
     elif kernel == 'bicubic':
-        return partial(core.resize.Bicubic, filter_param_a=b, filter_param_b=c, src_left=src_left, src_top=src_top, src_width=src_width, src_height=src_height)
+        return partial(core.resize.Bicubic, filter_param_a=b, filter_param_b=c)
     elif kernel == 'lanczos':
-        return partial(core.resize.Lanczos, filter_param_a=taps, src_left=src_left, src_top=src_top, src_width=src_width, src_height=src_height)
+        return partial(core.resize.Lanczos, filter_param_a=taps)
     elif kernel == 'spline16':
-        return partial(core.resize.Spline16, src_left=src_left, src_top=src_top, src_width=src_width, src_height=src_height)
+        return core.resize.Spline16
     elif kernel == 'spline36':
-        return partial(core.resize.Spline36, src_left=src_left, src_top=src_top, src_width=src_width, src_height=src_height)
+        return core.resize.Spline36
     elif kernel == 'spline64':
-        return partial(core.resize.Spline64, src_left=src_left, src_top=src_top, src_width=src_width, src_height=src_height)
+        return core.resize.Spline64
     else:
         raise ValueError('resize: Invalid kernel specified.')
 
@@ -135,16 +132,13 @@ def _Descale(clip: vs.VideoNode,
              b: float,
              c: float,
              taps: int,
-             src_left: float,
-             src_top: float,
-             src_width: float,
-             src_height: float,
-             showdiff: bool) -> Union[vs.VideoNode, List[vs.VideoNode]]:
-    descaler = _GetDescaler(kernel, b, c, taps, src_left, src_top, src_width, src_height)
-    down = descaler(clip, width, height)
+             showdiff: bool,
+             **cropping_args: Any) -> Union[vs.VideoNode, List[vs.VideoNode]]:
+    descaler = _GetDescaler(kernel, b, c, taps)
+    down = descaler(clip, width, height, **cropping_args)
     if showdiff:
-        resizer = _GetResizer(kernel, b, c, taps, src_left, src_top, src_width, src_height)
-        up = resizer(down, clip.width, clip.height)
+        resizer = _GetResizer(kernel, b, c, taps)
+        up = resizer(down, clip.width, clip.height, **cropping_args)
         diff = core.std.Expr([clip, up], 'x y - abs')
         return [down, diff]
     else:
