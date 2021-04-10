@@ -5,8 +5,8 @@ A `descale` wrapper for anime destriping.
 
 * VapourSynth version R46 or newer
 * [vapoursynth-descale](https://github.com/Irrational-Encoding-Wizardry/vapoursynth-descale)
-* VapourSynth R49 and Descale R3 or newer for `Spline64` support.
-* [EdgeFixer](https://github.com/sekrit-twc/EdgeFixer) for options of fixing top and bottom borders before descaling.
+* VapourSynth R49 and Descale R3 or newer for `Spline64` support. A recent version since [this release](https://github.com/Irrational-Encoding-Wizardry/vapoursynth-descale/commit/7ea0ca134183cadf4c47d0ab607fe51c22912c04) for using cropping parameters `src_width` and `src_height`.
+* An optional filter fixing borders before descaling. It should work for `GRAY16` input with `top` and `bottom` options. It is called only if nontrivial border widths are provided. The default is [EdgeFixer](https://github.com/sekrit-twc/EdgeFixer).
 
 ## How it works
 
@@ -18,7 +18,7 @@ The first plane of the input clip will be internally converted to `GRAY16` if fi
 ```python
 from destripe import Destripe
 
-down = Destripe(clip clip[, int width=1280, int height=360, str kernel='bicubic', float b=0, float c=1/2, int taps=3, float[] src_left=[0, 0], float[] src_top=[0, 0], float[] src_width=[width, width], float[] src_height=[height, height], int[] fix_top=[0, 0], int[] fix_bottom=[0, 0] bool showdiff=False])
+down = Destripe(clip clip[, int width=1280, int height=360, str kernel='bicubic', float b=0, float c=1/2, int taps=3, float[] src_left=[0, 0], float[] src_top=[0, 0], float[] src_width=[width, width], float[] src_height=[height, height], func fix_border_func=vs.core.edgefixer.Continuity, int[] fix_top=[0, 0], int[] fix_bottom=[0, 0], bool showdiff=False])
 
 down, diff = Destripe(clip, ..., showdiff=True)
 ```
@@ -30,8 +30,8 @@ Parameters of the resizers. See [Descale's page](https://github.com/Irrational-E
 - `src_left`, `src_top`, `src_width`, `src_height`</br>
 Specify the cropping parameters for the top field and the bottom field, respectively. They refer to the initial upscale, see [this link](https://github.com/Irrational-Encoding-Wizardry/vapoursynth-descale/issues/2#issuecomment-305876093). Usually you need to modify `src_top` until satisfactory.
 Note that `Descale` only accepts positive values of `src_width` and `src_height`, so negative or zero inputs will be replaced by values of `width` and `height`, respectively.
-- `fix_top`, `fix_bottom`</br>
-If specified, `EdgeFixer` will be applied to the top and bottom borders for each field, respectively, before descaling.
+- `fix_border_func`, `fix_top`, `fix_bottom`</br>
+If specified, a border fixing filter will be applied to the top and bottom borders for each field, respectively, before descaling.
 - `showdiff`</br>
 Set to `True` to include the de-rescale absolute error `diff` in the return list. `diff` has the same format as the first plane of `clip`.
 
