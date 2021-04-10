@@ -5,7 +5,7 @@ A `descale` wrapper for anime destriping.
 
 * VapourSynth version R46 or newer
 * [vapoursynth-descale](https://github.com/Irrational-Encoding-Wizardry/vapoursynth-descale)
-* VapourSynth R49 and Descale R3 or newer for `Spline64` support. A recent version since [this release](https://github.com/Irrational-Encoding-Wizardry/vapoursynth-descale/commit/7ea0ca134183cadf4c47d0ab607fe51c22912c04) for using cropping parameters `src_width` and `src_height`.
+* VapourSynth R49 and Descale R3 or newer for `Spline64` support. A recent version since [this commit](https://github.com/Irrational-Encoding-Wizardry/vapoursynth-descale/commit/7ea0ca134183cadf4c47d0ab607fe51c22912c04) for using cropping parameters `src_width` and `src_height`.
 * An optional filter fixing borders before descaling. It should work for `GRAY16` input with `top` and `bottom` options. It is called only if nontrivial border widths are provided. The default is [EdgeFixer](https://github.com/sekrit-twc/EdgeFixer).
 
 ## How it works
