@@ -1,6 +1,6 @@
 import vapoursynth as vs
 from functools import partial
-from typing import Any, Callable, List, Union
+from typing import Any, Callable, List, Union, Optional
 core = vs.core
 
 def Destripe(clip: vs.VideoNode,
@@ -14,7 +14,7 @@ def Destripe(clip: vs.VideoNode,
              src_top: Union[float, List[float]] = [0.0, 0.0],
              src_width: Union[float, List[float]] = [0.0, 0.0],
              src_height: Union[float, List[float]] = [0.0, 0.0],
-             fix_border_func: Callable[..., vs.VideoNode] = core.edgefixer.Continuity,
+             fix_border_func: Optional[Callable[..., vs.VideoNode]] = None,
              fix_top: Union[int, List[int]] = [0, 0],
              fix_bottom: Union[int, List[int]] = [0, 0],
              showdiff: bool = False) -> Union[vs.VideoNode, List[vs.VideoNode]]:
@@ -37,6 +37,8 @@ def Destripe(clip: vs.VideoNode,
         cropping_args_bot['src_width'] = width if src_width[1] <= 0.0 else src_width[1]
         cropping_args_top['src_height'] = height if src_height[0] <= 0.0 else src_height[0]
         cropping_args_bot['src_height'] = height if src_height[1] <= 0.0 else src_height[1]
+    if fix_border_func is None:
+        fix_border_func = core.edgefixer.Continuity
     if not isinstance(fix_top, list):
         fix_top = [fix_top, fix_top]
     if not isinstance(fix_bottom, list):
