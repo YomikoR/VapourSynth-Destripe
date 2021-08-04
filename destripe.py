@@ -45,7 +45,11 @@ def Destripe(clip: vs.VideoNode,
         fix_bottom = [fix_bottom, fix_bottom]
 
     isfloat = (y.format.sample_type == vs.FLOAT and y.format.bits_per_sample == 32)
-    sep = core.std.SeparateFields(y, True).std.SetFrameProp('_Field', delete=True)
+    sep = core.std.SeparateFields(y, True)
+    if 'API R4.' in vs.core.version():
+        sep = core.std.RemoveFrameProps(sep, '_Field')
+    else:
+        sep = core.std.SetFrameProp(sep, '_Field', delete=True)
     st = sep[0::2]
     sb = sep[1::2]
     if fix_top[0] > 0 or fix_bottom[0] > 0:
@@ -92,7 +96,7 @@ def _Weave(clipa: vs.VideoNode, clipb: vs.VideoNode) -> vs.VideoNode:
 def _GetDescaler(kernel: str,
                  b: float,
                  c: float,
-                 taps: int) -> Callable[[vs.VideoNode, int, int, ...], vs.VideoNode]:
+                 taps: int) -> Callable[..., vs.VideoNode]:
     if kernel == 'bilinear':
         return core.descale.Debilinear
     elif kernel == 'bicubic':
@@ -111,7 +115,7 @@ def _GetDescaler(kernel: str,
 def _GetResizer(kernel: str,
                 b: float,
                 c: float,
-                taps: int) -> Callable[[vs.VideoNode, int, int, ...], vs.VideoNode]:
+                taps: int) -> Callable[..., vs.VideoNode]:
     if kernel == 'bilinear':
         return core.resize.Bilinear
     elif kernel == 'bicubic':
